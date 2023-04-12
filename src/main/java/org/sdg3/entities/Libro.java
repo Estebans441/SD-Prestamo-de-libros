@@ -15,6 +15,10 @@ public class Libro implements Serializable {
         this.disponibles = disponibles;
     }
 
+    public Libro(String codigo) {
+        this.codigo = codigo;
+    }
+
     public Libro(Libro libro){
         this.codigo = libro.codigo;
         this.nombre = libro.nombre;

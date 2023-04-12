@@ -14,8 +14,13 @@ public class Prestamo implements Serializable {
     // CONSTRUCTORES
     public Prestamo(Date f_inicio, Integer renovaciones, Integer idCliente, Libro libro) {
         this.f_inicio = f_inicio;
+
         this.f_fin = f_inicio;
-        renovar();
+        Calendar c = Calendar.getInstance();
+        c.setTime(this.f_fin);
+        c.add(Calendar.WEEK_OF_YEAR, 1);
+        this.f_fin = c.getTime();
+
         this.renovaciones = renovaciones;
         this.idCliente = idCliente;
         this.libro = libro;
@@ -59,6 +64,7 @@ public class Prestamo implements Serializable {
         c.setTime(this.f_fin);
         c.add(Calendar.WEEK_OF_YEAR, 1);
         this.f_fin = c.getTime();
+        this.renovaciones++;
         return f_fin;
     }
 
