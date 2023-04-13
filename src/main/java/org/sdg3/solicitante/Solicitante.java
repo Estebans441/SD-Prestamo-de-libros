@@ -5,6 +5,7 @@ import org.sdg3.entities.Prestamo;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Scanner;
 
 import org.zeromq.SocketType;
@@ -45,22 +46,36 @@ public class Solicitante {
                 }
                 // Tipo Renovacion
                 else if(requerimiento[0].equals("R")) {
-                    for (Prestamo prestamo : prestamosVig)
-                        if (prestamo.getIdCliente() == Integer.valueOf(requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
+                    for (Prestamo prestamo : prestamosVig) {
+                        if (Objects.equals(prestamo.getIdCliente(), Integer.valueOf(requerimiento[2])) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
                             renovarPrestamo(prestamo);
                             break;
                         }
+                    }
                 }
                 // Tipo Devolucion
                 else if(requerimiento[0].equals("D")) {
                     for (Prestamo prestamo : prestamosVig) {
-                        if (prestamo.getIdCliente() == Integer.valueOf(requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
+                        if (Objects.equals(prestamo.getIdCliente(), Integer.valueOf(requerimiento[2])) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
                             devolverPrestamo(prestamo);
                             break;
                         }
                     }
                 }
             }
+
+            // Informacion de los prestamos vigentes luego de procesar todos los requerimientos
+            System.out.println("--------------------------------------------");
+            System.out.println("Estado actual: prestamos vigentes " + prestamosVig.size());
+            for (Prestamo prestamo : prestamosVig) {
+                System.out.println(prestamosVig.indexOf(prestamo) +
+                        " - Cliente: " + prestamo.getIdCliente() +
+                        " - Codigo: " + prestamo.getLibro().getCodigo() +
+                        " - Inicio: " + prestamo.getF_inicio() +
+                        " - Fin: " + prestamo.getF_fin());
+            }
+            System.out.println("--------------------------------------------");
+
             socketREQ.close();
         }
     }
@@ -74,21 +89,20 @@ public class Solicitante {
 
     // Metodo que realiza una renovacion de prestamo
     private static void renovarPrestamo(Prestamo prestamo) throws Exception{
-        // Se guarda la fecha de entrega previa a la renovacion
-        Date anterior = prestamo.getF_fin();
-
         // Solicitud de renovacion al gestor
         socketREQ.sendMore("R");
         socketREQ.send(prestamo.serializar());
 
         // Recibe respuesta del gestor
-        Prestamo prenovado = new Prestamo(socketREQ.recv());
-        Date renovada = prenovado.getF_fin();
+        Prestamo prestamo1 = new Prestamo(socketREQ.recv());
+
+        // Actualiza la lista de prestamos vigentes
+        prestamosVig.set(prestamosVig.indexOf(prestamo), prestamo1);
 
         // Muestra la informacion por consola
         System.out.println("\t> Prestamo renovado...");
-        System.out.println("\t\t Fecha de entrega anterior: " + anterior);
-        System.out.println("\t\t Fecha de entrega renovada: " + renovada);
+        System.out.println("\t\t Fecha de entrega anterior: " + prestamo.getF_fin());
+        System.out.println("\t\t Fecha de entrega renovada: " + prestamo1.getF_fin());
     }
 
     // Metodo que realiza una devolucion de prestamo
