@@ -17,17 +17,22 @@ public class Gestor {
     private static ZMQ.Socket socketREQ; // Se comunica con el actor de solicitud
 
     public static void main(String[] args) throws Exception {
-        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint propio
+        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":4444"; // endpoint propio
+        String endpointBroker = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint broker
         String endpointSolicitudes = "tcp://"+ipSede[Integer.parseInt(args[0])]+":6666"; // endpoint del actor de solicitudes (sincrono)
 
         try(ZContext context = new ZContext()){
             // Socket de comunicacion con clientes
             socketREP = context.createSocket(SocketType.REP);
-            socketREP.connect(endpoint);
+            socketREP.connect(endpointBroker);
 
             // Socket de comunicacion con el actor de solicitudes
             socketREQ = context.createSocket(SocketType.REQ);
             socketREQ.connect(endpointSolicitudes);
+
+            // Socket de comunicacion con los actores asicronos
+            socketPUB = context.createSocket(SocketType.PUB);
+            socketPUB.bind(endpoint);
 
             // Inicia la atencion a solicitudes
             while (!Thread.currentThread().isInterrupted()) {
@@ -55,7 +60,6 @@ public class Gestor {
 
     // Metodo que procesa una solicitud de prestamo
     private static void solicitarPrestamo(Prestamo prestamo) throws IOException {
-        // TODO : Procesamiento del requerimiento de Solicitud
         socketREQ.send(prestamo.serializar());
         socketREP.send(socketREQ.recvStr());
     }
@@ -69,26 +73,29 @@ public class Gestor {
         System.out.println("Usuario: " + prestamo.getIdCliente());
         System.out.println("--------------------------------------------");
         System.out.println("\t> Renovando Prestamo...");
-        System.out.println("\t\t Fecha de entrega anterior: " + prestamo.getF_fin());
-        System.out.println("\t\t Fecha de entrega renovada: " + prestamo.renovar());
+
         // Envia respuesta al PS
-        socketREP.send(prestamo.serializar());
-        System.out.println("\t> Confirmacion renovacion enviada...");
+        socketREP.send("ok");
+        System.out.println("\t> Confirmacion renovacion enviada a PS...");
         System.out.println("\t> Publicando requerimiento...");
         // TODO : Publicacion del requerimiento de renovacion para actores
+        socketPUB.sendMore("R");
+        socketPUB.send(prestamo.serializar());
     }
 
     // Metodo que procesa una devolucion de prestamo
-    private static void devolverPrestamo(Prestamo prestamo){
+    private static void devolverPrestamo(Prestamo prestamo) throws IOException {
         System.out.println("--------------------------------------------");
-        System.out.println("Tipo: R");
+        System.out.println("Tipo: D");
         System.out.println("Codigo de libro: " + prestamo.getLibro().getCodigo());
         System.out.println("Usuario: " + prestamo.getIdCliente());
         System.out.println("--------------------------------------------");
         // Envia respuesta al PS
-        socketREP.send("D");
-        System.out.println("\t> Confirmacion de devolucion enviada...");
+        socketREP.send("ok");
+        System.out.println("\t> Confirmacion de devolucion enviada a PS...");
         System.out.println("\t> Publicando requerimiento...");
         // TODO : Publicacion del requerimiento de devolucion para actores
+        socketPUB.sendMore("D");
+        socketPUB.send(prestamo.serializar());
     }
 }

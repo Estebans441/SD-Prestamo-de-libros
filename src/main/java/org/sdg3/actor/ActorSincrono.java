@@ -21,7 +21,6 @@ public class ActorSincrono {
 
     // Sockets
     private static ZMQ.Socket socketREP;
-    private static ZMQ.Socket socketREQ;
 
     // Bases de datos de las sedes
     private static IBDConector bdc1;
@@ -35,11 +34,6 @@ public class ActorSincrono {
             // Socket de comunicacion con clientes
             socketREP = context.createSocket(SocketType.REP);
             socketREP.connect(endpoint);
-
-            // Socket de comunicacion con mutex
-            socketREQ = context.createSocket(SocketType.REQ);
-            socketREQ.connect(endpointMutex);
-
 
             // Busca el registro del CentralServer
             Registry registry = LocateRegistry.getRegistry(ipSede[0], 8888);
@@ -55,9 +49,8 @@ public class ActorSincrono {
                 // Recibe el prestamo del requerimiento
                 Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
                 // TODO: Acquire mutex
-                if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante) && bdc2.crearPrestamo(prestamoSolicitante)){
+                if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante) && bdc2.crearPrestamo(prestamoSolicitante))
                     socketREP.send("ok");
-                }
                 else
                     socketREP.send("nok");
                 // TODO: Release mutex

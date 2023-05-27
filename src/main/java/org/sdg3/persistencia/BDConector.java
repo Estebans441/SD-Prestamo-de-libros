@@ -1,5 +1,6 @@
 package org.sdg3.persistencia;
 
+import org.sdg3.entities.Libro;
 import org.sdg3.entities.Prestamo;
 
 import java.rmi.server.UnicastRemoteObject;
@@ -112,29 +113,45 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
     @Override
     public Boolean renovarPrestamo(Prestamo prestamo) throws RemoteException {
         try{
-            String pattern = "dd/MM/YYYY";
-            DateFormat df = new SimpleDateFormat(pattern);
-            String fechaFin = df.format(prestamo.getF_fin());
-
-            String query = "UPDATE  libreria.prestamo SET " +
-                    "fechaFin = STR_TO_DATE('" + fechaFin + "','%d/%m/%Y') " +
+            String query = "SELECT * FROM prestamo " +
                     "WHERE Libro_ISBN = '" + prestamo.getLibro().getCodigo() + "' AND " +
                     "idUsuario = '" + prestamo.getIdCliente() +"';";
             System.out.println(query);
-            Statement stmt = this.mysql.getConnection().createStatement();
-            int code = stmt.executeUpdate(query);
-            stmt.close();
 
-            if (code == 1) {
-                System.out.println("Se renovo el prestamo!");
-                return true;
+            Statement stmt = this.mysql.getConnection().createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmt.executeQuery(query);
+            if(rs.first())
+            {
+                Prestamo prestamo1 = new Prestamo(rs.getString("idUsuario"), new Libro(rs.getString("Libro_ISBN")),rs.getDate("fechaInicio"),rs.getDate("fechaFin"));
+                rs.close();
+                stmt.close();
+
+                prestamo1.renovar();
+                String pattern = "dd/MM/YYYY";
+                DateFormat df = new SimpleDateFormat(pattern);
+                String fechaFin = df.format(prestamo.getF_fin());
+
+                query = "UPDATE  libreria.prestamo SET " +
+                        "fechaFin = STR_TO_DATE('" + fechaFin + "','%d/%m/%Y') " +
+                        "WHERE Libro_ISBN = '" + prestamo1.getLibro().getCodigo() + "' AND " +
+                        "idUsuario = '" + prestamo1.getIdCliente() +"';";
+                System.out.println(query);
+                stmt = this.mysql.getConnection().createStatement();
+                int code = stmt.executeUpdate(query);
+                stmt.close();
+
+                return code == 1;
             }
-            return false;
+            else {
+                rs.close();
+                stmt.close();
+                return false;
+            }
         }
         catch (SQLException ex){
             System.out.println("Error + " + ex.getMessage());
             Logger.getLogger("");
-            return false;
+            return null;
         }
     }
 
@@ -150,7 +167,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
             int codeDelete = stmtDelete.executeUpdate(queryDelete);
             System.out.println("Se elimino el prestamo!");
             stmtDelete.close();
-            return null;
+            return true;
         }
         catch (SQLException ex) {
             System.out.println("Error + " + ex.getMessage());

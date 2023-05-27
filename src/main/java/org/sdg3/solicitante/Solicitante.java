@@ -21,9 +21,6 @@ public class Solicitante {
     // Sockets
     private static ZMQ.Socket socketREQ;
 
-    // Prestamos realizados
-    private static final ArrayList<Prestamo> prestamosVig = new ArrayList<Prestamo>();
-
     public static void main(String[] args) throws Exception {
         try(ZContext context = new ZContext()){
             // Socket de comunicacion con el gestor
@@ -48,35 +45,13 @@ public class Solicitante {
                 }
                 // Tipo Renovacion
                 else if(requerimiento[0].equals("R")) {
-                    for (Prestamo prestamo : prestamosVig) {
-                        if (Objects.equals(prestamo.getIdCliente(), requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
-                            renovarPrestamo(prestamo);
-                            break;
-                        }
-                    }
+                    renovarPrestamo(requerimiento);
                 }
                 // Tipo Devolucion
                 else if(requerimiento[0].equals("D")) {
-                    for (Prestamo prestamo : prestamosVig) {
-                        if (Objects.equals(prestamo.getIdCliente(), requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
-                            devolverPrestamo(prestamo);
-                            break;
-                        }
-                    }
+                    devolverPrestamo(requerimiento);
                 }
             }
-
-            // Informacion de los prestamos vigentes luego de procesar todos los requerimientos
-            System.out.println("--------------------------------------------");
-            System.out.println("Estado actual: prestamos vigentes " + prestamosVig.size());
-            for (Prestamo prestamo : prestamosVig) {
-                System.out.println(prestamosVig.indexOf(prestamo) +
-                        " - Cliente: " + prestamo.getIdCliente() +
-                        " - Codigo: " + prestamo.getLibro().getCodigo() +
-                        " - Inicio: " + prestamo.getF_inicio() +
-                        " - Fin: " + prestamo.getF_fin());
-            }
-            System.out.println("--------------------------------------------");
 
             socketREQ.close();
         }
@@ -87,45 +62,40 @@ public class Solicitante {
         Prestamo prestamo = new Prestamo(new Date(), requerimiento[2], new Libro(requerimiento[1]));
         socketREQ.sendMore("S");
         socketREQ.send(prestamo.serializar());
-        if(socketREQ.recvStr().equals("ok")){
-            prestamosVig.add(prestamo);
+        if(socketREQ.recvStr().equals("ok"))
             System.out.println("\t> Solicitud aceptada");
-        }
         else
             System.out.println("\t> Solicitud rechazada");
     }
 
     // Metodo que realiza una renovacion de prestamo
-    private static void renovarPrestamo(Prestamo prestamo) throws Exception{
+    private static void renovarPrestamo(String[] requerimiento) throws Exception{
         // Solicitud de renovacion al gestor
         socketREQ.sendMore("R");
-        socketREQ.send(prestamo.serializar());
-
-        // Recibe respuesta del gestor
-        Prestamo prestamo1 = new Prestamo(socketREQ.recv());
-
-        // Actualiza la lista de prestamos vigentes
-        prestamosVig.set(prestamosVig.indexOf(prestamo), prestamo1);
-
-        // Muestra la informacion por consola
-        System.out.println("\t> Prestamo renovado...");
-        System.out.println("\t\t Fecha de entrega anterior: " + prestamo.getF_fin());
-        System.out.println("\t\t Fecha de entrega renovada: " + prestamo1.getF_fin());
-    }
-
-    // Metodo que realiza una devolucion de prestamo
-    private static void devolverPrestamo(Prestamo prestamo) throws Exception{
-        // Solicitud de renovacion al gestor
-        socketREQ.sendMore("D");
+        Prestamo prestamo = new Prestamo(new Date(), requerimiento[2], new Libro(requerimiento[1]));
         socketREQ.send(prestamo.serializar());
 
         // Recibe respuesta del gestor
         String respuesta = new String(socketREQ.recv(), ZMQ.CHARSET);
-        if(respuesta.equals("D")) {
-            prestamosVig.remove(prestamo);
-            // Muestra la informacion por consola
+        if(respuesta.equals("ok"))
+            System.out.println("\t> Prestamo renovado");
+        else
+            System.out.println("\t> Error renovando el prestamo");
+    }
+
+    // Metodo que realiza una devolucion de prestamo
+    private static void devolverPrestamo(String[] requerimiento) throws Exception{
+        // Solicitud de renovacion al gestor
+        socketREQ.sendMore("D");
+        Prestamo prestamo = new Prestamo(new Date(), requerimiento[2], new Libro(requerimiento[1]));
+        socketREQ.send(prestamo.serializar());
+
+        // Recibe respuesta del gestor
+        String respuesta = new String(socketREQ.recv(), ZMQ.CHARSET);
+        if(respuesta.equals("ok"))
             System.out.println("\t> Prestamo devuelto");
-        }
+        else
+            System.out.println("\t> Error devolviendo el prestamo");
     }
 
     // Lee el archivo con los requerimientos

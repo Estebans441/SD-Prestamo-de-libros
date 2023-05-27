@@ -7,11 +7,18 @@ import java.util.Date;
 public class Prestamo implements Serializable {
     Date f_inicio; // Fecha de inicio del prestamo
     Date f_fin; // Fecha de finalizacion del prestamo
-
     String idCliente; // Id del solicitante que realiza la solicitud
     Libro libro; // Libro que se tiene prestado
 
     // CONSTRUCTORES
+
+    public Prestamo(String idCliente, Libro libro, Date f_inicio, Date f_fin) {
+        this.f_inicio = f_inicio;
+        this.f_fin = f_fin;
+        this.idCliente = idCliente;
+        this.libro = libro;
+    }
+
     public Prestamo(Date f_inicio, String idCliente, Libro libro) {
         this.f_inicio = f_inicio;
 
