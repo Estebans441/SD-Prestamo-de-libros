@@ -43,11 +43,11 @@ public class ActorSincrono {
 
             // Busca el registro del CentralServer
             Registry registry = LocateRegistry.getRegistry(ipSede[0], 8888);
-            Registry registry2 = LocateRegistry.getRegistry(ipSede[1], 8888);
+            Registry registry2 = LocateRegistry.getRegistry(ipSede[1], 8889);
 
             // Buscar el objeto timeServer en el registro y si lo encuentra, crear el objeto local
             bdc1 = (IBDConector) registry.lookup("dbconector0");
-            bdc2 = (BDConector) registry2.lookup("dbconector1");
+            bdc2 = (IBDConector) registry2.lookup("dbconector1");
 
 
             // Inicia la atencion a solicitudes
