@@ -1,13 +1,11 @@
 package org.sdg3.actor;
 
 import org.sdg3.entities.Prestamo;
-import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
-import org.zeromq.ZContext;
 
-public class ActorDevoluciones {
+public class ActorAsincrono {
     // Constantes
-    private static String endpointGestor = "tcp://*:5555"; // Endpoint del gestor con el que se comunica
+    private static String endpointGestor = "tcp://*:5557"; // Endpoint del gestor con el que se comunica
 
     // Sockets
     private static ZMQ.Socket socketSUB;

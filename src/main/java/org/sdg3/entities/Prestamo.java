@@ -7,12 +7,12 @@ import java.util.Date;
 public class Prestamo implements Serializable {
     Date f_inicio; // Fecha de inicio del prestamo
     Date f_fin; // Fecha de finalizacion del prestamo
-    Integer renovaciones; // Numero de veces que se ha renovado el prestamo
-    Integer idCliente; // Id del solicitante que realiza la solicitud
+
+    String idCliente; // Id del solicitante que realiza la solicitud
     Libro libro; // Libro que se tiene prestado
 
     // CONSTRUCTORES
-    public Prestamo(Date f_inicio, Integer renovaciones, Integer idCliente, Libro libro) {
+    public Prestamo(Date f_inicio, String idCliente, Libro libro) {
         this.f_inicio = f_inicio;
 
         this.f_fin = f_inicio;
@@ -21,7 +21,6 @@ public class Prestamo implements Serializable {
         c.add(Calendar.WEEK_OF_YEAR, 1);
         this.f_fin = c.getTime();
 
-        this.renovaciones = renovaciones;
         this.idCliente = idCliente;
         this.libro = libro;
     }
@@ -29,7 +28,6 @@ public class Prestamo implements Serializable {
     public Prestamo(Prestamo p) {
         this.f_inicio = p.f_inicio;
         this.f_fin = p.f_fin;
-        this.renovaciones = p.renovaciones;
         this.idCliente = p.idCliente;
         this.libro = p.libro;
     }
@@ -42,7 +40,6 @@ public class Prestamo implements Serializable {
 
         this.f_inicio = p.f_inicio;
         this.f_fin = p.f_fin;
-        this.renovaciones = p.renovaciones;
         this.idCliente = p.idCliente;
         this.libro = p.libro;
     }
@@ -54,8 +51,7 @@ public class Prestamo implements Serializable {
         Prestamo x = new Prestamo(this);
         salida.writeObject(x);
 
-        byte[] objetoSerializado = bos.toByteArray();
-        return objetoSerializado;
+        return bos.toByteArray();
     }
 
     // Metodo que renueva un prestamo en una semana
@@ -64,7 +60,6 @@ public class Prestamo implements Serializable {
         c.setTime(this.f_fin);
         c.add(Calendar.WEEK_OF_YEAR, 1);
         this.f_fin = c.getTime();
-        this.renovaciones++;
         return f_fin;
     }
 
@@ -85,19 +80,13 @@ public class Prestamo implements Serializable {
         this.f_fin = f_fin;
     }
 
-    public Integer getRenovaciones() {
-        return renovaciones;
-    }
 
-    public void setRenovaciones(Integer renovaciones) {
-        this.renovaciones = renovaciones;
-    }
 
-    public Integer getIdCliente() {
+    public String getIdCliente() {
         return idCliente;
     }
 
-    public void setIdCliente(Integer idCliente) {
+    public void setIdCliente(String idCliente) {
         this.idCliente = idCliente;
     }
 

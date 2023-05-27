@@ -2,6 +2,8 @@ package org.sdg3.solicitante;
 
 import org.sdg3.entities.Libro;
 import org.sdg3.entities.Prestamo;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.Date;
@@ -14,13 +16,13 @@ import org.zeromq.ZContext;
 
 public class Solicitante {
     // Constantes
-    private static String endpointGestor = "tcp://*:5555"; // Endpoint del gestor con el que se comunica
+    private static String endpointGestor = "tcp://10.43.100.191:5555"; // Endpoint del gestor con el que se comunica
 
     // Sockets
     private static ZMQ.Socket socketREQ;
 
     // Prestamos realizados
-    private static ArrayList<Prestamo> prestamosVig = new ArrayList<Prestamo>();
+    private static final ArrayList<Prestamo> prestamosVig = new ArrayList<Prestamo>();
 
     public static void main(String[] args) throws Exception {
         try(ZContext context = new ZContext()){
@@ -47,7 +49,7 @@ public class Solicitante {
                 // Tipo Renovacion
                 else if(requerimiento[0].equals("R")) {
                     for (Prestamo prestamo : prestamosVig) {
-                        if (Objects.equals(prestamo.getIdCliente(), Integer.valueOf(requerimiento[2])) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
+                        if (Objects.equals(prestamo.getIdCliente(), requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
                             renovarPrestamo(prestamo);
                             break;
                         }
@@ -56,7 +58,7 @@ public class Solicitante {
                 // Tipo Devolucion
                 else if(requerimiento[0].equals("D")) {
                     for (Prestamo prestamo : prestamosVig) {
-                        if (Objects.equals(prestamo.getIdCliente(), Integer.valueOf(requerimiento[2])) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
+                        if (Objects.equals(prestamo.getIdCliente(), requerimiento[2]) && prestamo.getLibro().getCodigo().equals(requerimiento[1])) {
                             devolverPrestamo(prestamo);
                             break;
                         }
@@ -81,10 +83,16 @@ public class Solicitante {
     }
 
     // Metodo que realiza una solicitud de prestamo
-    private static void solicitarPrestamo(String[] requerimiento){
-        prestamosVig.add(new Prestamo(new Date(), 0, Integer.valueOf(requerimiento[2]), new Libro(requerimiento[1])));
-        // La aceptacion del prestamo depende de la respuesta del gestor, sin embargo, todavia no se ha implementado
-        System.out.println("\t> Solicitud aceptada");
+    private static void solicitarPrestamo(String[] requerimiento) throws IOException {
+        Prestamo prestamo = new Prestamo(new Date(), requerimiento[2], new Libro(requerimiento[1]));
+        socketREQ.sendMore("S");
+        socketREQ.send(prestamo.serializar());
+        if(socketREQ.recvStr().equals("ok")){
+            prestamosVig.add(prestamo);
+            System.out.println("\t> Solicitud aceptada");
+        }
+        else
+            System.out.println("\t> Solicitud rechazada");
     }
 
     // Metodo que realiza una renovacion de prestamo

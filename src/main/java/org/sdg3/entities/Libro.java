@@ -4,14 +4,12 @@ import java.io.*;
 
 public class Libro implements Serializable {
     private String codigo; // Codigo ISBN del libro
-    private String nombre; // Nombre del libro
     private Integer disponibles; // Existencias disponibles
 
 
     // CONSTRUCTORES
     public Libro(String codigo, String nombre, Integer disponibles) {
         this.codigo = codigo;
-        this.nombre = nombre;
         this.disponibles = disponibles;
     }
 
@@ -21,7 +19,6 @@ public class Libro implements Serializable {
 
     public Libro(Libro libro){
         this.codigo = libro.codigo;
-        this.nombre = libro.nombre;
         this.disponibles = libro.disponibles;
     }
 
@@ -32,7 +29,6 @@ public class Libro implements Serializable {
         Libro objeto = (Libro) entrada.readObject();
 
         this.codigo = objeto.codigo;
-        this.nombre = objeto.nombre;
         this.disponibles = objeto.disponibles;
     }
 
@@ -54,14 +50,6 @@ public class Libro implements Serializable {
 
     public void setCodigo(String codigo) {
         this.codigo = codigo;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
 
     public Integer getDisponibles() {

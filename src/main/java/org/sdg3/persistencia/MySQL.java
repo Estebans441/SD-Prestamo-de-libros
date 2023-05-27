@@ -17,9 +17,9 @@ public class MySQL {
 
         this.host = "localhost";
         this.port = "3306";
-        this.user = "";
-        this.pass = "";
-        this.database = "";
+        this.user = "root";
+        this.pass = "password";
+        this.database = "libreria";
         this.parameters = "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
         this.connection = null;
     }
@@ -29,7 +29,7 @@ public class MySQL {
             String path = "jdbc:mysql://" + this.host + ":" + this.port + "/" + this.database + this.parameters;
             //System.out.println(path);
             this.connection = DriverManager.getConnection(path,user,pass);
-            //System.out.println("Se conecto");
+            System.out.println("Se conecto");
         } catch (SQLException ex) {
             System.out.println("No se conecto");
             System.out.println("SQLException: " + ex.getMessage());
@@ -46,7 +46,7 @@ public class MySQL {
     public void desconectar() {
         try {
             this.connection.close();
-            //System.out.println("Se desconecto");
+            System.out.println("Se desconecto");
         } catch (SQLException ex) {
             System.out.println("No se desconecto");
             System.out.println("SQLException: " + ex.getMessage());

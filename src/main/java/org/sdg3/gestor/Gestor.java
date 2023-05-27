@@ -5,31 +5,37 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+import java.io.IOException;
+
 public class Gestor {
     // Constantes
-    private static String endpoint = "tcp://*:5555"; // endpoint propio
-    private static String endpointSolicitudes; // endpoint del actor de solicitudes
+    private static String[] ipSede = {"10.43.100.191", "10.43.100.187"};
 
     // Sockets
     private static ZMQ.Socket socketPUB; // Publica solicitudes de renovacion y devolucion
     private static ZMQ.Socket socketREP; // Responde a los procesos solicitantes
     private static ZMQ.Socket socketREQ; // Se comunica con el actor de solicitud
 
-    // Prestamo que se esta procesando
-    private static Prestamo prestamoSolicitante;
-
     public static void main(String[] args) throws Exception {
+        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint propio
+        String endpointSolicitudes = "tcp://"+ipSede[Integer.parseInt(args[0])]+":6666"; // endpoint del actor de solicitudes (sincrono)
+
         try(ZContext context = new ZContext()){
             // Socket de comunicacion con clientes
             socketREP = context.createSocket(SocketType.REP);
-            socketREP.bind(endpoint);
+            socketREP.connect(endpoint);
+
+            // Socket de comunicacion con el actor de solicitudes
+            socketREQ = context.createSocket(SocketType.REQ);
+            socketREQ.connect(endpointSolicitudes);
 
             // Inicia la atencion a solicitudes
             while (!Thread.currentThread().isInterrupted()) {
                 // Recibe el tipo de requerimiento
                 String tipo = socketREP.recvStr();
+
                 // Recibe el prestamo del requerimiento
-                prestamoSolicitante = new Prestamo(socketREP.recv());
+                Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
 
                 // Tipo Solicitud
                 if(tipo.equals("S")){
@@ -48,8 +54,10 @@ public class Gestor {
     }
 
     // Metodo que procesa una solicitud de prestamo
-    private static void solicitarPrestamo(Prestamo prestamo){
+    private static void solicitarPrestamo(Prestamo prestamo) throws IOException {
         // TODO : Procesamiento del requerimiento de Solicitud
+        socketREQ.send(prestamo.serializar());
+        socketREP.send(socketREQ.recvStr());
     }
 
     // Metodo que procesa una renovacion de prestamo
