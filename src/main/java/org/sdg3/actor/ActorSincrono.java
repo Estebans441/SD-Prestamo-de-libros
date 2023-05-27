@@ -43,7 +43,7 @@ public class ActorSincrono {
 
             // Busca el registro del CentralServer
             Registry registry = LocateRegistry.getRegistry(ipSede[0], 8888);
-            Registry registry2 = LocateRegistry.getRegistry(ipSede[1], 8889);
+            Registry registry2 = LocateRegistry.getRegistry(ipSede[1], 8888);
 
             // Buscar el objeto timeServer en el registro y si lo encuentra, crear el objeto local
             bdc1 = (IBDConector) registry.lookup("dbconector0");
@@ -55,8 +55,7 @@ public class ActorSincrono {
                 // Recibe el prestamo del requerimiento
                 Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
                 // TODO: Acquire mutex
-                if(validarExistencias(prestamoSolicitante.getLibro())){
-                    // TODO: Modificar BD
+                if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante) && bdc2.crearPrestamo(prestamoSolicitante)){
                     socketREP.send("ok");
                 }
                 else

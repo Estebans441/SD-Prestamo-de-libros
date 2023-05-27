@@ -1,5 +1,7 @@
 package org.sdg3.persistencia;
 
+import org.sdg3.entities.Prestamo;
+
 import java.rmi.server.UnicastRemoteObject;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -11,13 +13,17 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.logging.Logger;
 
 public class BDConector extends UnicastRemoteObject implements IBDConector {
     private final MySQL mysql;
+    private final String sede;
 
     protected BDConector(String sede) throws RemoteException {
         this.mysql = new MySQL();
+        this.sede = sede;
         mysql.conectar();
     }
 
@@ -50,7 +56,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
             System.out.println(vigentes);
             stmt.close();
 
-            // Prestamos vigentes con el libro...
+            // Existencias del libro...
             query = "SELECT Existencias AS existencias FROM libreria.libro WHERE ISBN = '"+isbn+"';";
             System.out.println(query);
             stmt = this.mysql.getConnection().createStatement();
@@ -66,7 +72,90 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
         catch (SQLException ex){
             System.out.println("Error + " + ex.getMessage());
             Logger.getLogger("");
+            return false;
         }
-        return false;
+    }
+
+    @Override
+    public Boolean crearPrestamo(Prestamo prestamo) throws RemoteException {
+        try{
+            String pattern = "dd/MM/YYYY";
+            DateFormat df = new SimpleDateFormat(pattern);
+            String fechaInicio = df.format(prestamo.getF_inicio());
+            String fechaFin = df.format(prestamo.getF_fin());
+
+            String query = "INSERT INTO libreria.prestamo(idUsuario, Libro_ISBN, fechaInicio, fechaFin, vigente, sede) VALUES(" +
+                    "'" + prestamo.getIdCliente() + "'," +
+                    "'" + prestamo.getLibro().getCodigo() + "'," +
+                    "STR_TO_DATE('" + fechaInicio + "','%d/%m/%Y')," +
+                    "STR_TO_DATE('" + fechaFin + "','%d/%m/%Y')," +
+                    "'1'," +
+                    "'"+this.sede+"');";
+            System.out.println(query);
+            Statement stmt = this.mysql.getConnection().createStatement();
+            int code = stmt.executeUpdate(query);
+            stmt.close();
+
+            if (code == 1) {
+                System.out.println("Se creo el prestamo!");
+                return true;
+            }
+            return false;
+        }
+        catch (SQLException ex){
+            System.out.println("Error + " + ex.getMessage());
+            Logger.getLogger("");
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean renovarPrestamo(Prestamo prestamo) throws RemoteException {
+        try{
+            String pattern = "dd/MM/YYYY";
+            DateFormat df = new SimpleDateFormat(pattern);
+            String fechaFin = df.format(prestamo.getF_fin());
+
+            String query = "UPDATE  libreria.prestamo SET " +
+                    "fechaFin = STR_TO_DATE('" + fechaFin + "','%d/%m/%Y') " +
+                    "WHERE Libro_ISBN = '" + prestamo.getLibro().getCodigo() + "' AND " +
+                    "idUsuario = '" + prestamo.getIdCliente() +"';";
+            System.out.println(query);
+            Statement stmt = this.mysql.getConnection().createStatement();
+            int code = stmt.executeUpdate(query);
+            stmt.close();
+
+            if (code == 1) {
+                System.out.println("Se renovo el prestamo!");
+                return true;
+            }
+            return false;
+        }
+        catch (SQLException ex){
+            System.out.println("Error + " + ex.getMessage());
+            Logger.getLogger("");
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean devolverPrestamo(Prestamo prestamo) throws RemoteException {
+        //DELETE FROM libreria.Prestamo WHERE Libro_ISBN = 'ISBN_DEL_LIBRO' AND idUsuario = 'ID_USUARIO';
+        try{
+            String queryDelete = "DELETE FROM libreria.prestamo WHERE " +
+                    "Libro_ISBN = '" + prestamo.getLibro().getCodigo() + "' AND " +
+                    "idUsuario = "+ prestamo.getIdCliente() +";";
+
+            Statement stmtDelete = this.mysql.getConnection().createStatement();
+            int codeDelete = stmtDelete.executeUpdate(queryDelete);
+            System.out.println("Se elimino el prestamo!");
+            stmtDelete.close();
+            return null;
+        }
+        catch (SQLException ex) {
+            System.out.println("Error + " + ex.getMessage());
+            Logger.getLogger("");
+            return false;
+        }
     }
 }
