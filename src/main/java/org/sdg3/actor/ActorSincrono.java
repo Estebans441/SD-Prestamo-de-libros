@@ -9,10 +9,12 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.*;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class ActorSincrono {
@@ -46,14 +48,21 @@ public class ActorSincrono {
 
             // Inicia la atencion a solicitudes
             while (!Thread.currentThread().isInterrupted()) {
-                // Recibe el prestamo del requerimiento
-                Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
-                // TODO: Acquire mutex
-                if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante) && bdc2.crearPrestamo(prestamoSolicitante))
-                    socketREP.send("ok");
-                else
-                    socketREP.send("nok");
-                // TODO: Release mutex
+                String tipo = socketREP.recvStr();
+                if(tipo.equals("A")){
+                    socketREP.send(serializar(bdc1.findAllSede()));
+                }
+                else{
+                    // Recibe el prestamo del requerimiento
+                    Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
+                    System.out.println("Solicitud recibida");
+                    // TODO: Acquire mutex
+                    if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante, args[0]) && bdc2.crearPrestamo(prestamoSolicitante, args[0]))
+                        socketREP.send("ok");
+                    else
+                        socketREP.send("nok");
+                    // TODO: Release mutex
+                }
             }
         }
     }
@@ -61,5 +70,14 @@ public class ActorSincrono {
     // Metodo que valida las existencias de cierto libro
     private static boolean validarExistencias(Libro libro) throws RemoteException {
         return bdc1.validarExistencias(libro.getCodigo()) && bdc2.validarExistencias(libro.getCodigo());
+    }
+
+    private static byte[] serializar(ArrayList<Prestamo> prestamos) throws IOException{
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream salida = new ObjectOutputStream(bos);
+        salida.writeObject(prestamos);
+
+        return bos.toByteArray();
+
     }
 }

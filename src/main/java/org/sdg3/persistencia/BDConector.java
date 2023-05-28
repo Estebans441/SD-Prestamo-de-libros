@@ -126,7 +126,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
 
                 String pattern = "dd/MM/YYYY";
                 DateFormat df = new SimpleDateFormat(pattern);
-                String fechaFin = df.format(prestamo1.renovar());
+                String fechaFin = df.format(prestamo1.getF_fin());
 
                 query = "UPDATE  libreria.prestamo SET " +
                         "fechaFin = STR_TO_DATE('" + fechaFin + "','%d/%m/%Y') " +

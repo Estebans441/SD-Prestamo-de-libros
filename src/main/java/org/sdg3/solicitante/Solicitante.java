@@ -75,11 +75,8 @@ public class Solicitante {
         socketREQ.send(prestamo.serializar());
 
         // Recibe respuesta del gestor
-        String respuesta = new String(socketREQ.recv(), ZMQ.CHARSET);
-        if(respuesta.equals("ok"))
-            System.out.println("\t> Prestamo renovado");
-        else
-            System.out.println("\t> Error renovando el prestamo");
+        Prestamo p = new Prestamo(socketREQ.recv());
+        System.out.println("Nueva fecha de renovacion: " + p.getF_fin());
     }
 
     // Metodo que realiza una devolucion de prestamo
