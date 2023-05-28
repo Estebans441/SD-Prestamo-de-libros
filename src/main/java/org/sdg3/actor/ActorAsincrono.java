@@ -43,7 +43,7 @@ public class ActorAsincrono {
                 Prestamo prestamo = new Prestamo(socketSUB.recv());
 
                 System.out.println("--------------------------------------------");
-                System.out.println("Tipo: R");
+                System.out.println("Tipo: "+filtro);
                 System.out.println("Codigo de libro: " + prestamo.getLibro().getCodigo());
                 System.out.println("Usuario: " + prestamo.getIdCliente());
                 System.out.println("--------------------------------------------");

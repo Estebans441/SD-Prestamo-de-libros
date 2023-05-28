@@ -16,12 +16,13 @@ import org.zeromq.ZContext;
 
 public class Solicitante {
     // Constantes
-    private static String endpointGestor = "tcp://10.43.100.191:5555"; // Endpoint del gestor con el que se comunica
-
+    private static String[] ipSede = {"10.43.100.191", "10.43.100.187"};
     // Sockets
     private static ZMQ.Socket socketREQ;
 
     public static void main(String[] args) throws Exception {
+        String endpointGestor = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5555"; // Endpoint del gestor con el que se comunica
+
         try(ZContext context = new ZContext()){
             // Socket de comunicacion con el gestor
             socketREQ = context.createSocket(SocketType.REQ);
@@ -40,16 +41,14 @@ public class Solicitante {
                 System.out.println("--------------------------------------------");
 
                 // Tipo Solicitud
-                if(requerimiento[0].equals("S")) {
-                    solicitarPrestamo(requerimiento);
-                }
-                // Tipo Renovacion
-                else if(requerimiento[0].equals("R")) {
-                    renovarPrestamo(requerimiento);
-                }
-                // Tipo Devolucion
-                else if(requerimiento[0].equals("D")) {
-                    devolverPrestamo(requerimiento);
+                switch (requerimiento[0]) {
+                    case "S" -> solicitarPrestamo(requerimiento);
+
+                    // Tipo Renovacion
+                    case "R" -> renovarPrestamo(requerimiento);
+
+                    // Tipo Devolucion
+                    case "D" -> devolverPrestamo(requerimiento);
                 }
             }
 

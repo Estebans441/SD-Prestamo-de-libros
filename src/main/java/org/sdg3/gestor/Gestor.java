@@ -17,7 +17,7 @@ public class Gestor {
     private static ZMQ.Socket socketREQ; // Se comunica con el actor de solicitud
 
     public static void main(String[] args) throws Exception {
-        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":4444"; // endpoint propio
+        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":4444"; // endpoint broker
         String endpointBroker = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint broker
         String endpointSolicitudes = "tcp://"+ipSede[Integer.parseInt(args[0])]+":6666"; // endpoint del actor de solicitudes (sincrono)
 
@@ -43,16 +43,14 @@ public class Gestor {
                 Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
 
                 // Tipo Solicitud
-                if(tipo.equals("S")){
-                    solicitarPrestamo(prestamoSolicitante);
-                }
-                // Tipo Renovacion
-                else if (tipo.equals("R")) {
-                    renovarPrestamo(prestamoSolicitante);
-                }
-                // Tipo Devolucion
-                else if (tipo.equals("D")) {
-                    devolverPrestamo(prestamoSolicitante);
+                switch (tipo) {
+                    case "S" -> solicitarPrestamo(prestamoSolicitante);
+
+                    // Tipo Renovacion
+                    case "R" -> renovarPrestamo(prestamoSolicitante);
+
+                    // Tipo Devolucion
+                    case "D" -> devolverPrestamo(prestamoSolicitante);
                 }
             }
         }
@@ -60,8 +58,16 @@ public class Gestor {
 
     // Metodo que procesa una solicitud de prestamo
     private static void solicitarPrestamo(Prestamo prestamo) throws IOException {
+        // Muestra la informacion del requerimiento por consola
+        System.out.println("--------------------------------------------");
+        System.out.println("Tipo: S");
+        System.out.println("Codigo de libro: " + prestamo.getLibro().getCodigo());
+        System.out.println("Usuario: " + prestamo.getIdCliente());
+        System.out.println("--------------------------------------------");
+        System.out.println("\t> Solicitando Prestamo...");
         socketREQ.send(prestamo.serializar());
-        socketREP.send(socketREQ.recvStr());
+        String respuesta = socketREQ.recvStr();
+        socketREP.send(respuesta);
     }
 
     // Metodo que procesa una renovacion de prestamo
@@ -78,7 +84,6 @@ public class Gestor {
         socketREP.send("ok");
         System.out.println("\t> Confirmacion renovacion enviada a PS...");
         System.out.println("\t> Publicando requerimiento...");
-        // TODO : Publicacion del requerimiento de renovacion para actores
         socketPUB.sendMore("R");
         socketPUB.send(prestamo.serializar());
     }
@@ -94,7 +99,6 @@ public class Gestor {
         socketREP.send("ok");
         System.out.println("\t> Confirmacion de devolucion enviada a PS...");
         System.out.println("\t> Publicando requerimiento...");
-        // TODO : Publicacion del requerimiento de devolucion para actores
         socketPUB.sendMore("D");
         socketPUB.send(prestamo.serializar());
     }
