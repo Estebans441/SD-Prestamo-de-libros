@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 public class BDConector extends UnicastRemoteObject implements IBDConector {
@@ -75,7 +76,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
     }
 
     @Override
-    public Boolean crearPrestamo(Prestamo prestamo) throws RemoteException {
+    public Boolean crearPrestamo(Prestamo prestamo, String sede) throws RemoteException {
         try{
             String pattern = "dd/MM/YYYY";
             DateFormat df = new SimpleDateFormat(pattern);
@@ -88,7 +89,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
                     "STR_TO_DATE('" + fechaInicio + "','%d/%m/%Y')," +
                     "STR_TO_DATE('" + fechaFin + "','%d/%m/%Y')," +
                     "'1'," +
-                    "'"+this.sede+"');";
+                    "'"+sede+"');";
             System.out.println(query);
             Statement stmt = this.mysql.getConnection().createStatement();
             int code = stmt.executeUpdate(query);
@@ -153,7 +154,6 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
 
     @Override
     public Boolean devolverPrestamo(Prestamo prestamo) throws RemoteException {
-        //DELETE FROM libreria.Prestamo WHERE Libro_ISBN = 'ISBN_DEL_LIBRO' AND idUsuario = 'ID_USUARIO';
         try{
             String queryDelete = "DELETE FROM libreria.prestamo WHERE " +
                     "Libro_ISBN = '" + prestamo.getLibro().getCodigo() + "' AND " +
@@ -169,6 +169,32 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
             System.out.println("Error + " + ex.getMessage());
             Logger.getLogger("");
             return false;
+        }
+    }
+
+    @Override
+    public ArrayList<Prestamo> findAllSede() throws RemoteException {
+        try{
+            ArrayList<Prestamo> prestamos = new ArrayList<>();
+
+            String query = "SELECT * FROM prestamo;";
+            System.out.println(query);
+
+            Statement stmt = this.mysql.getConnection().createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmt.executeQuery(query);
+
+            while(rs.next())
+                prestamos.add(new Prestamo(rs.getString("idUsuario"), new Libro(rs.getString("Libro_ISBN")),rs.getDate("fechaInicio"),rs.getDate("fechaFin")));
+
+            rs.close();
+            stmt.close();
+
+            return prestamos;
+        }
+        catch (SQLException ex) {
+            System.out.println("Error + " + ex.getMessage());
+            Logger.getLogger("");
+            return null;
         }
     }
 }
