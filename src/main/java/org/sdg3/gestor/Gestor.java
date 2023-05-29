@@ -24,8 +24,8 @@ public class Gestor {
     private static ZMQ.Socket socketREQ; // Se comunica con el actor de solicitud
 
     public static void main(String[] args) throws Exception {
-        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":4444"; // endpoint broker
-        String endpointBroker = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint broker
+        String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":4444"; // endpoint publicador
+        String endpointBroker = "tcp://"+ipSede[Integer.parseInt(args[0])]+":5556"; // endpoint broker PS
         String endpointSolicitudes = "tcp://"+ipSede[Integer.parseInt(args[0])]+":6666"; // endpoint del actor de solicitudes (sincrono)
 
         try(ZContext context = new ZContext()){
@@ -105,16 +105,15 @@ public class Gestor {
         boolean encontrado = false;
         for(Prestamo prestamo1 : prestamos){
             if(Objects.equals(prestamo1.getIdCliente(), prestamo.getIdCliente()) && prestamo1.getLibro().getCodigo().equals(prestamo.getLibro().getCodigo())){
+                encontrado = true;
                 prestamo = prestamo1;
                 index = prestamos.indexOf(prestamo);
-                encontrado = true;
             }
         }
 
         if(!encontrado){
             prestamo.setF_inicio(new Date());
             prestamo.setF_fin(new Date());
-            prestamo.renovar();
         }
 
         // Muestra la informacion del requerimiento por consola
@@ -124,8 +123,8 @@ public class Gestor {
         System.out.println("Usuario: " + prestamo.getIdCliente());
         System.out.println("--------------------------------------------");
         System.out.println("\t> Renovando Prestamo...");
-        System.out.println("Fecha anterior: " + prestamo.getF_fin());
-        System.out.println("Nueva fecha: " + prestamo.renovar());
+        System.out.println("\t   Fecha anterior: " + prestamo.getF_fin());
+        System.out.println("\t   Nueva fecha: " + prestamo.renovar());
 
         // Actualiza la lista de prestamos vigentes
         if(encontrado)
@@ -134,6 +133,8 @@ public class Gestor {
         // Envia respuesta al PS
         socketREP.send(prestamo.serializar());
         System.out.println("\t> Confirmacion renovacion enviada a PS...");
+
+        // Publicacion de requerimiento al actor
         System.out.println("\t> Publicando requerimiento...");
         socketPUB.sendMore("R");
         socketPUB.send(prestamo.serializar());

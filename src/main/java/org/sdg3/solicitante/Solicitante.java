@@ -76,7 +76,7 @@ public class Solicitante {
 
         // Recibe respuesta del gestor
         Prestamo p = new Prestamo(socketREQ.recv());
-        System.out.println("Nueva fecha de renovacion: " + p.getF_fin());
+        System.out.println("\t> Nueva fecha de renovacion: " + p.getF_fin());
     }
 
     // Metodo que realiza una devolucion de prestamo
