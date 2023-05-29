@@ -39,7 +39,7 @@ public class Gestor {
 
             // Socket de comunicacion con los actores asicronos
             socketPUB = context.createSocket(SocketType.PUB);
-            socketPUB.bind(endpoint);
+            socketPUB.connect(endpoint);
 
 
             // Obtiene los prestamos vigentes de la Base de datos

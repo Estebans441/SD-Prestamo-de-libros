@@ -28,7 +28,7 @@ public class ActorAsincrono {
         try (ZContext context = new ZContext()) {
             //  Socket suscriptor al topico indicado en argumentos
             socketSUB = context.createSocket(SocketType.SUB);
-            socketSUB.connect("tcp://"+ipSede[Integer.parseInt(args[0])]+":4444");
+            socketSUB.connect("tcp://"+ipSede[Integer.parseInt(args[0])]+":4445");
             String filtro = args[1];
             socketSUB.subscribe(filtro.getBytes(ZMQ.CHARSET));
 
