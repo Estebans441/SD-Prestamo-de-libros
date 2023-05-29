@@ -21,6 +21,8 @@ public class ActorAsincrono {
 
     // Sockets
     private static ZMQ.Socket socketSUB;
+    private static ZMQ.Socket socketREQMutex;
+    private static ZMQ.Socket socketSUBMutex;
 
     public static void main(String[] args) throws Exception {
         try (ZContext context = new ZContext()) {
@@ -29,6 +31,13 @@ public class ActorAsincrono {
             socketSUB.connect("tcp://"+ipSede[Integer.parseInt(args[0])]+":4444");
             String filtro = args[1];
             socketSUB.subscribe(filtro.getBytes(ZMQ.CHARSET));
+
+            // Socket REQ para comunicacion con mutex
+            socketREQMutex = context.createSocket(SocketType.REQ);
+            socketREQMutex.connect("tcp://10.43.100.191:9999");
+
+            socketSUBMutex = context.createSocket(SocketType.SUB);
+            socketSUBMutex.connect("tcp://10.43.100.191:9998");
 
             // Busca el registro del CentralServer
             Registry registry = LocateRegistry.getRegistry(ipSede[0], 8888);
@@ -59,20 +68,42 @@ public class ActorAsincrono {
     // Metodo que se encarga de procesar una devolucion en la base de datos
     private static void devolverPrestamo(Prestamo prestamo) throws RemoteException {
         // TODO: acquire
+        acquire();
         if(bdc1.devolverPrestamo(prestamo) && bdc2.devolverPrestamo(prestamo))
             System.out.println("Prestamo devuelto");
         else
             System.out.println("Error devolviendo el prestamo");
         // TODO: release
+        release();
     }
 
     // Metodo que se encarga de procesar una renovacion en la base de datos
     private static void renovarPrestamo(Prestamo prestamo) throws RemoteException {
         // TODO: acquire
+        acquire();
         if(bdc1.renovarPrestamo(prestamo) && bdc2.renovarPrestamo(prestamo))
             System.out.println("Prestamo renovado");
         else
             System.out.println("Error renovando el prestamo");
         // TODO: release
+        release();
+    }
+
+    private static void acquire(){
+        socketREQMutex.send("A");
+        System.out.println("Solicitando acceso bd");
+        String turno = socketREQMutex.recvStr();
+        System.out.println("Turno "+turno);
+        if(!turno.equals("ok")){
+            socketSUBMutex.subscribe(turno.getBytes(ZMQ.CHARSET));
+            socketSUBMutex.recvStr();
+        }
+        System.out.println("Acceso adquirido");
+    }
+
+    private static void release(){
+        socketREQMutex.send("R");
+        System.out.println("Acceso bd soltado");
+        socketREQMutex.recvStr();
     }
 }

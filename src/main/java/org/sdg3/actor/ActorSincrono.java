@@ -23,6 +23,8 @@ public class ActorSincrono {
 
     // Sockets
     private static ZMQ.Socket socketREP;
+    private static ZMQ.Socket socketREQMutex;
+    private static ZMQ.Socket socketSUBMutex;
 
     // Bases de datos de las sedes
     private static IBDConector bdc1;
@@ -30,12 +32,18 @@ public class ActorSincrono {
 
     public static void main(String[] args) throws Exception {
         String endpoint = "tcp://"+ipSede[Integer.parseInt(args[0])]+":6667"; // Endpoint del gestor con el que se comunica
-        String endpointMutex = "tcp://10.43.100.191:7777"; // Endpoint del gestor con el que se comunica
 
         try(ZContext context = new ZContext()){
             // Socket de comunicacion con clientes
             socketREP = context.createSocket(SocketType.REP);
             socketREP.connect(endpoint);
+
+            // Socket REQ para comunicacion con mutex
+            socketREQMutex = context.createSocket(SocketType.REQ);
+            socketREQMutex.connect("tcp://10.43.100.191:9999");
+
+            socketSUBMutex = context.createSocket(SocketType.SUB);
+            socketSUBMutex.connect("tcp://10.43.100.191:9998");
 
             // Busca el registro del CentralServer
             Registry registry = LocateRegistry.getRegistry(ipSede[0], 8888);
@@ -50,18 +58,20 @@ public class ActorSincrono {
             while (!Thread.currentThread().isInterrupted()) {
                 String tipo = socketREP.recvStr();
                 if(tipo.equals("A")){
+                    acquire();
                     socketREP.send(serializar(bdc1.findAllSede()));
+                    release();
                 }
                 else{
                     // Recibe el prestamo del requerimiento
                     Prestamo prestamoSolicitante = new Prestamo(socketREP.recv());
                     System.out.println("Solicitud recibida");
-                    // TODO: Acquire mutex
+                    acquire();
                     if(validarExistencias(prestamoSolicitante.getLibro()) && bdc1.crearPrestamo(prestamoSolicitante, args[0]) && bdc2.crearPrestamo(prestamoSolicitante, args[0]))
                         socketREP.send("ok");
                     else
                         socketREP.send("nok");
-                    // TODO: Release mutex
+                    release();
                 }
             }
         }
@@ -78,6 +88,23 @@ public class ActorSincrono {
         salida.writeObject(prestamos);
 
         return bos.toByteArray();
+    }
 
+    private static void acquire(){
+        socketREQMutex.send("A");
+        System.out.println("Solicitando acceso bd");
+        String turno = socketREQMutex.recvStr();
+        System.out.println("Turno "+turno);
+        if(!turno.equals("ok")){
+            socketSUBMutex.subscribe(turno.getBytes(ZMQ.CHARSET));
+            socketSUBMutex.recvStr();
+        }
+        System.out.println("Acceso adquirido");
+    }
+
+    private static void release(){
+        socketREQMutex.send("R");
+        System.out.println("Acceso bd soltado");
+        socketREQMutex.recvStr();
     }
 }
