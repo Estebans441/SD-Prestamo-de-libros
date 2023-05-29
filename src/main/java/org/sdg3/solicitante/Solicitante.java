@@ -29,7 +29,7 @@ public class Solicitante {
             socketREQ.connect(endpointGestor);
 
             // Lee los requerimientos del archivo
-            ArrayList<String[]> requerimientos = leerArchivo("src/main/resources/req.txt");
+            ArrayList<String[]> requerimientos = leerArchivo("src/main/resources/req"+args[0]+".txt");
 
             // Procesa cada requerimiento
             for(String[] requerimiento : requerimientos){

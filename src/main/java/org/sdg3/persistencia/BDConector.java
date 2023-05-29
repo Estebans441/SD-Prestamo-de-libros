@@ -47,7 +47,7 @@ public class BDConector extends UnicastRemoteObject implements IBDConector {
         //
         try{
             System.out.println("--------------------------------------------");
-            System.out.println("Validando existencias para el libro" + isbn);
+            System.out.println("Validando existencias para el libro " + isbn);
             System.out.println("--------------------------------------------");
 
             // Prestamos vigentes con el libro...
