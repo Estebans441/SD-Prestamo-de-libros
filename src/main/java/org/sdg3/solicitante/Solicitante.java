@@ -32,6 +32,7 @@ public class Solicitante {
             ArrayList<String[]> requerimientos = leerArchivo("src/main/resources/req"+args[0]+".txt");
 
             // Procesa cada requerimiento
+            long startTime = System.currentTimeMillis();
             for(String[] requerimiento : requerimientos){
                 // Muestra la informacion del requerimiento por consola
                 System.out.println("--------------------------------------------");
@@ -51,7 +52,12 @@ public class Solicitante {
                     case "D" -> devolverPrestamo(requerimiento);
                 }
             }
-
+            long endTime = System.currentTimeMillis() - startTime;
+            System.out.println("--------------------------------------------");
+            System.out.println("--------------------------------------------");
+            System.out.println("Tiempo para procesar " + requerimientos.size() + " requerimientos: " + endTime + " mls");
+            System.out.println("--------------------------------------------");
+            System.out.println("--------------------------------------------");
             socketREQ.close();
         }
     }

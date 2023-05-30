@@ -62,6 +62,7 @@ public class Mutex {
                     if(!colaEspera.isEmpty()){
                         String siguiente = String.valueOf(colaEspera.poll());
                         System.out.println("\t > Consediendo acceso al turno " + siguiente);
+                        Thread.sleep(0,200);
                         enUso = true;
                         socketPUB.send(siguiente + " ok");
                     }
@@ -74,6 +75,8 @@ public class Mutex {
                     System.out.print(pendiente + " ");
                 System.out.println();
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
