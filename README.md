@@ -5,6 +5,7 @@ Sistema distribuido de prestamo de libros con manejo de concurrencia y toleranci
 Para la ejecucion del sistema es necesario tener en cuenta que se conforma por dos sedes ubicadas en distintos dispositivos. En el codigo y para las pruebas se uso:
 - Sede 1: 10.43.100.191
 - Sede 2: 10.43.100.187
+
 En caso de querer modificar estas ips es requerido buscarlas en cada clase y modificarlas.
 
 Posteriormente se define una de las sedes como la que contendra el nodo de exclusión mutua y ejecutar este.
