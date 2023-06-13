@@ -11,6 +11,7 @@ En caso de querer modificar estas ips es requerido buscarlas en cada clase y mod
 Posteriormente se define una de las sedes como la que contendra el nodo de exclusión mutua y ejecutar este.
 
  ### Para cada sede:
+Como primer paso es necesario iniciar la base de datos en MySQL, para esto se proporciona un script DDL en la carpeta de recursos, así como unas inserciones DML de ejemplo.
  En cada nodo de cada sede se debe pasar como argumento el numero de la sede a la que pertenece (0 o 1). El orden de ejecución de los nodos es el siguiente.
 1. Conector de la base de datos.
 2. Brokers
